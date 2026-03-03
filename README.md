@@ -2,51 +2,51 @@
 
 A production-ready FastAPI scaffold with a modern asynchronous stack.
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - **Framework:** [FastAPI](https://fastapi.tiangolo.com/) (0.110.0+)
 - **Database:** [PostgreSQL](https://www.postgresql.org/) with [pgvector](https://github.com/pgvector/pgvector)
 - **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/) (Async)
 - **Migrations:** [Alembic](https://alembic.sqlalchemy.org/)
 - **Task Queue:** [Celery](https://docs.celeryq.dev/) + [Redis](https://redis.io/)
-- **Auth & Storage:** [Supabase](https://supabase.com/)
-- **AI:** [OpenAI SDK](https://github.com/openai/openai-python)
+- **Authentication & Storage:** [Supabase](https://supabase.com/)
+- **AI Integration:** [OpenAI SDK](https://github.com/openai/openai-python)
 - **Logging:** [structlog](https://www.structlog.org/)
 - **Validation:** [Pydantic v2](https://docs.pydantic.dev/latest/)
-- **Containerization:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
+- **Infrastructure:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 backend/
 ├── app/
-│   ├── main.py              # Entry point & app configuration
-│   ├── config.py            # Pydantic settings & env management
-│   ├── dependencies.py      # FastAPI dependencies (DB, etc.)
-│   ├── api/v1/router.py     # API routing logic
+│   ├── main.py              # Application entry point and configuration
+│   ├── config.py            # Settings management using Pydantic
+│   ├── dependencies.py      # Global FastAPI dependencies
+│   ├── api/v1/router.py     # API routing and versioning
 │   ├── services/            # Business logic layer
-│   ├── ai/                  # AI base classes and prompts
-│   ├── workers/             # Celery app and tasks
+│   ├── ai/                  # AI service implementations and prompts
+│   ├── workers/             # Celery application and background tasks
 │   ├── db/
-│   │   ├── session.py       # SQLAlchemy engine & session setup
-│   │   ├── models/          # Database models
-│   │   └── repositories/    # Data access layer (Repository pattern)
-│   ├── schemas/             # Pydantic models for validation
-│   └── core/                # Global exceptions & utilities
-├── alembic/                 # Database migrations
-├── tests/                   # Test suite
-├── docker-compose.yml       # Local development setup
-└── requirements.txt         # Project dependencies
+│   │   ├── session.py       # Database connection and session management
+│   │   ├── models/          # SQLAlchemy database models
+│   │   └── repositories/    # Data access layer using Repository pattern
+│   ├── schemas/             # Pydantic models for data validation
+│   └── core/                # Core exceptions and utility functions
+├── alembic/                 # Database migration scripts
+├── tests/                   # Automated test suite
+├── docker-compose.yml       # Orchestration for local development
+└── requirements.txt         # Project dependencies with pinned versions
 ```
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Python 3.11+ (for local development)
+- Docker and Docker Compose installed on your system.
+- Python 3.11+ (optional, for local IDE support).
 
-### Installation
+### Installation and Setup
 
 1. **Clone the repository:**
    ```bash
@@ -54,36 +54,42 @@ backend/
    cd monolearn-/backend
    ```
 
-2. **Setup environment variables:**
+2. **Configure Environment Variables:**
    ```bash
    cp .env.example .env
    ```
-   Fill in the required keys in `.env` (Supabase, OpenAI, etc.).
+   Edit the `.env` file and provide the necessary configuration values (Supabase keys, OpenAI API key, etc.).
 
-3. **Launch with Docker:**
+3. **Launch the Application:**
    ```bash
    docker-compose up --build
    ```
 
-The API will be available at `http://localhost:8000`.  
-Swagger documentation is available at `http://localhost:8000/docs`.
+The API will be accessible at `http://localhost:8000`.  
+Interactive API documentation (Swagger UI) is available at `http://localhost:8000/docs`.
 
-## 🧪 Development
+## Development Workflow
 
 ### Database Migrations
-```bash
-# Generate a new migration
-docker-compose exec api alembic revision --autogenerate -m "Description"
 
-# Run migrations
+Use Alembic to manage database schema changes:
+
+```bash
+# Generate a new migration script based on model changes
+docker-compose exec api alembic revision --autogenerate -m "Add user table"
+
+# Apply migrations to the database
 docker-compose exec api alembic upgrade head
 ```
 
-### Running Tasks (Celery)
-The worker starts automatically with Docker Compose. To test tasks manually:
+### Background Tasks
+
+Celery workers are automatically started by Docker Compose. To verify the worker is functional, you can trigger a test task:
+
 ```bash
 docker-compose exec api python -c "from app.workers.celery_app import test_task; test_task.delay('Developer')"
 ```
 
-## 📝 License
-MIT
+## License
+
+This project is licensed under the MIT License.
