@@ -1,6 +1,6 @@
 # Monolearn Backend Scaffold
 
-A production-ready FastAPI scaffold with a modern asynchronous stack.
+A production ready FastAPI scaffold with a modern asynchronous stack.
 
 ## Tech Stack
 
