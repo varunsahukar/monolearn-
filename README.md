@@ -34,3 +34,4 @@ Solo Tutor operates on a "Local-First" AI philosophy. All data processing and AI
 Built with 🧠 for the next generation of learners.
  
   
+   
