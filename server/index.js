@@ -6,9 +6,18 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { fetchTranscript } from 'youtube-transcript/dist/youtube-transcript.esm.js';
 import { buildVideoAnalysis, extractYouTubeVideoId } from '../src/utils/videoIntelligence.js';
-import { Speech } from '@google-cloud/speech';
+import SpeechModule from '@google-cloud/speech';
 import { exec } from 'node:child_process';
+
+const { SpeechClient } = SpeechModule;
 import { promisify } from 'node:util';
+import {
+  getLLMResponse,
+  generateKnowledgeChatResponse,
+  analyzeCode,
+  generateQuizQuestions,
+  answerVideoQuestion,
+} from '../src/utils/llmClient.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,7 +31,7 @@ let speechClient = null;
 
 if (projectId && keyFilePath) {
   try {
-    speechClient = new Speech.SpeechClient({
+    speechClient = new SpeechClient({
       projectId,
       keyFilename: keyFilePath,
     });
@@ -54,6 +63,125 @@ const sendJson = (response, statusCode, payload) => {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   });
   response.end(JSON.stringify(payload));
+};
+
+// LLM API Handlers
+
+const handleKnowledgeChat = async (body, response) => {
+  try {
+    const { query, context = [] } = JSON.parse(body);
+
+    if (!query) {
+      sendJson(response, 400, { error: 'Missing query parameter' });
+      return;
+    }
+
+    response.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-store',
+    });
+
+    const answer = await generateKnowledgeChatResponse(query, context);
+    const result = {
+      answer,
+      context: context.map((c) => ({ name: c.name, type: c.type })),
+      timestamp: new Date().toISOString(),
+    };
+
+    response.end(JSON.stringify(result));
+  } catch (error) {
+    sendJson(response, 500, {
+      error: `Knowledge chat failed: ${error.message}`,
+    });
+  }
+};
+
+const handleCodeAnalysis = async (body, response) => {
+  try {
+    const { code, language = 'python', analysisType = 'bugs' } = JSON.parse(body);
+
+    if (!code) {
+      sendJson(response, 400, { error: 'Missing code parameter' });
+      return;
+    }
+
+    response.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
+
+    const analysis = await analyzeCode(code, language, analysisType);
+    const result = {
+      code: code.substring(0, 200) + '...', // Truncate for response
+      language,
+      analysisType,
+      analysis,
+      timestamp: new Date().toISOString(),
+    };
+
+    response.end(JSON.stringify(result));
+  } catch (error) {
+    sendJson(response, 500, {
+      error: `Code analysis failed: ${error.message}`,
+    });
+  }
+};
+
+const handleQuizGeneration = async (body, response) => {
+  try {
+    const { context = '', count = 5, difficulty = 'medium', topic = '' } = JSON.parse(body);
+
+    if (!context) {
+      sendJson(response, 400, { error: 'Missing context parameter' });
+      return;
+    }
+
+    response.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
+
+    const questions = await generateQuizQuestions(context, count, difficulty, topic);
+    const result = {
+      questions,
+      count: questions.length,
+      difficulty,
+      topic,
+      timestamp: new Date().toISOString(),
+    };
+
+    response.end(JSON.stringify(result));
+  } catch (error) {
+    sendJson(response, 500, {
+      error: `Quiz generation failed: ${error.message}`,
+    });
+  }
+};
+
+const handleVideoChat = async (body, response) => {
+  try {
+    const { transcript = [], question } = JSON.parse(body);
+
+    if (!question || !transcript.length) {
+      sendJson(response, 400, { error: 'Missing question or transcript' });
+      return;
+    }
+
+    response.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
+
+    const result = await answerVideoQuestion(transcript, question);
+    result.transcriptLength = transcript.length;
+
+    response.end(JSON.stringify(result));
+  } catch (error) {
+    sendJson(response, 500, {
+      error: `Video chat failed: ${error.message}`,
+    });
+  }
 };
 
 const fetchYouTubeMetadata = async (url) => {
@@ -299,6 +427,51 @@ const server = http.createServer(async (request, response) => {
 
   if (requestUrl.pathname === '/api/health') {
     sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  // LLM Chat Endpoints
+  if (request.method === 'POST' && requestUrl.pathname === '/api/chat/knowledge') {
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      handleKnowledgeChat(body, response);
+    });
+    return;
+  }
+
+  if (request.method === 'POST' && requestUrl.pathname === '/api/chat/code') {
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      handleCodeAnalysis(body, response);
+    });
+    return;
+  }
+
+  if (request.method === 'POST' && requestUrl.pathname === '/api/quiz/generate') {
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      handleQuizGeneration(body, response);
+    });
+    return;
+  }
+
+  if (request.method === 'POST' && requestUrl.pathname === '/api/video/chat') {
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      handleVideoChat(body, response);
+    });
     return;
   }
 
