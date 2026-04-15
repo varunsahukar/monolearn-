@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: monolearn
+    runtime: node
+    startCommand: npm run start
+    buildCommand: npm install && npm run build
+    envVars:
+      - key: NODE_ENV
+        value: production
