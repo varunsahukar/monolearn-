@@ -8,8 +8,6 @@ import { fetchTranscript } from 'youtube-transcript/dist/youtube-transcript.esm.
 import { buildVideoAnalysis, extractYouTubeVideoId } from '../src/utils/videoIntelligence.js';
 import SpeechModule from '@google-cloud/speech';
 import { exec } from 'node:child_process';
-
-const { SpeechClient } = SpeechModule;
 import { promisify } from 'node:util';
 import {
   getLLMResponse,
@@ -18,6 +16,8 @@ import {
   generateQuizQuestions,
   answerVideoQuestion,
 } from '../src/utils/llmClient.js';
+
+const { SpeechClient } = SpeechModule;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
