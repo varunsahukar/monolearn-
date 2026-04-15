@@ -91,19 +91,55 @@ const QuizLab = () => {
 
   const subjects = ['all', ...new Set(items.map(item => item.subject).filter(Boolean))];
 
-  const generateQuiz = useCallback((subjectFocus = selectedSubject) => {
+  const generateQuiz = useCallback(async (subjectFocus = selectedSubject) => {
     setIsGenerating(true);
 
-    setTimeout(() => {
-      setQuizData(buildQuizQuestions(subjectFocus));
+    try {
+      // Prepare context from vault items
+      const context = items
+        .map((item) => `${item.name} (${item.type}): ${item.preview || item.content || ''}`)
+        .join('\n\n');
+
+      if (!context.trim()) {
+        setQuizData(buildQuizQuestions(subjectFocus));
+        setQuizStarted(true);
+        setCurrentQuestionIndex(0);
+        setScore(0);
+        return;
+      }
+
+      const response = await fetch('/api/quiz/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          context,
+          count: 5,
+          difficulty: 'medium',
+          topic: subjectFocus === 'all' ? '' : subjectFocus,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate quiz');
+      }
+
+      const data = await response.json();
+      setQuizData(data.questions || buildQuizQuestions(subjectFocus));
       setQuizStarted(true);
-      setIsGenerating(false);
       setCurrentQuestionIndex(0);
       setScore(0);
+    } catch (error) {
+      console.error('Quiz generation error:', error);
+      setQuizData(buildQuizQuestions(subjectFocus));
+      setQuizStarted(true);
+    } finally {
+      setIsGenerating(false);
       setSelectedOption(null);
       setShowExplanation(false);
-    }, 1500);
-  }, [selectedSubject]);
+    }
+  }, [selectedSubject, items]);
 
   const handleGenerate = useCallback(() => {
     generateQuiz(selectedSubject);
@@ -191,55 +227,7 @@ const QuizLab = () => {
         </div>
       )}
 
-      {!quizStarted ? (
-        <div className="flex flex-col items-center justify-center py-16 space-y-8 bg-secondary/10 rounded-[40px] border-2 border-dashed border-border/40">
-          <div className="p-4 bg-card rounded-3xl border border-border shadow-sm">
-            <HelpCircle className="w-10 h-10 text-foreground" />
-          </div>
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl font-bold">Adaptive Quiz Lab</h2>
-            <p className="text-muted-foreground text-sm max-w-sm mx-auto leading-relaxed">
-              Generate personalized quizzes from your vault. Our AI adapts difficulty based on your previous performance.
-            </p>
-          </div>
-
-          <div className="w-full max-w-sm space-y-6">
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground text-center">Select Subject Focus</h4>
-              <div className="flex flex-wrap justify-center gap-2">
-                {subjects.map(sub => (
-                  <button
-                    key={sub}
-                    onClick={() => setSelectedSubject(sub)}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all",
-                      selectedSubject === sub 
-                        ? "bg-foreground text-background border-foreground" 
-                        : "bg-card text-muted-foreground border-border/60 hover:border-foreground/40"
-                    )}
-                  >
-                    {sub}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating || items.length === 0}
-              className="w-full py-4 bg-foreground text-background rounded-2xl font-bold text-[13px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-foreground/20 flex items-center justify-center gap-3 disabled:opacity-50"
-            >
-              {isGenerating ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              {isGenerating ? "Synthesizing Quiz..." : "Generate Neural Quiz"}
-            </button>
-            {items.length === 0 && (
-              <p className="text-[10px] text-center text-red-500 font-bold uppercase tracking-widest">
-                Upload materials to the vault to start
-              </p>
-            )}
-          </div>
-        </div>
-      ) : (
+      {quizStarted && (
         <div className="space-y-8 pb-12">
           {/* Quiz Progress */}
           <div className="flex items-center justify-between">
