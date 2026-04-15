@@ -95,12 +95,12 @@ const downloadYouTubeAudio = async (url) => {
     // Directory might already exist
   }
 
-  const audioFilePath = path.join(tmpDir, `audio-${Date.now()}.m4a`);
+  const audioFilePath = path.join(tmpDir, `audio-${Date.now()}.mp3`);
   const execPromise = promisify(exec);
 
   try {
     // Download audio using youtube-dl
-    const command = `yt-dlp -f 251 -x --audio-format m4a --audio-quality 0 -o "${audioFilePath}" "${url}"`;
+    const command = `yt-dlp -f 251 -x --audio-format mp3 --audio-quality 0 -o "${audioFilePath}" "${url}"`;
     await execPromise(command);
 
     // Verify file exists
@@ -128,7 +128,7 @@ const transcribeAudioWithGoogleCloud = async (audioFilePath) => {
     const request = {
       audio: { content: audioBytes },
       config: {
-        encoding: 'M4A',
+        encoding: 'MP3',
         languageCode: 'en-US',
         enableAutomaticPunctuation: true,
         enableWordTimeOffsets: true,
