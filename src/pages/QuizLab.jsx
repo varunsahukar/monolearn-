@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  HelpCircle, 
-  Sparkles, 
-  CheckCircle2, 
-  XCircle, 
-  RefreshCcw, 
-  ArrowRight, 
-  Trophy, 
-  BookOpen, 
+import {
+  HelpCircle,
+  Sparkles,
+  CheckCircle2,
+  XCircle,
+  RefreshCcw,
+  ArrowRight,
+  Trophy,
+  BookOpen,
   Zap,
   BarChart3,
   Filter,
@@ -19,54 +19,18 @@ import { useVault } from '../hooks/useVault';
 import { clearPendingIntent, getPendingIntent } from '../utils/studyIntent';
 import { cn } from '../utils/cn';
 
-const buildQuizQuestions = (subjectFocus) => {
-  const mockQuestions = [
-    {
-      id: 1,
-      subject: 'Data Structures',
-      question: "Which of the following describes the time complexity of a recursive Fibonacci function without memoization?",
-      options: ["O(n)", "O(log n)", "O(2^n)", "O(n log n)"],
-      correct: 2,
-      explanation: "Each call results in two more recursive calls, leading to exponential growth in the total number of calls.",
-      source: "sorting_algorithms.py"
-    },
-    {
-      id: 2,
-      subject: 'Operating Systems',
-      question: "What is the primary difference between a Monolithic Kernel and Microkernels?",
-      options: [
-        "Monolithic kernels are faster but harder to debug",
-        "Microkernels run all services in user space",
-        "Monolithic kernels are smaller in size",
-        "Microkernels are inherently less secure"
-      ],
-      correct: 1,
-      explanation: "Microkernels minimize the code running in kernel space, moving services like file systems and drivers to user space.",
-      source: "OS Kernel Architecture.mp4"
-    },
-    {
-      id: 3,
-      subject: 'Machine Learning',
-      question: "In supervised learning, what is the main goal of the model?",
-      options: [
-        "To find hidden patterns in unlabeled data",
-        "To learn a mapping from input features to output labels",
-        "To maximize a reward signal in an environment",
-        "To reduce the dimensionality of the input space"
-      ],
-      correct: 1,
-      explanation: "Supervised learning uses labeled training data to learn a function that can predict outcomes for new, unseen data.",
-      source: "Machine Learning Foundations.pdf"
-    }
-  ];
-
-  if (subjectFocus === 'all') {
-    return mockQuestions;
+// Default fallback questions (shown if no vault items and API fails)
+const DEFAULT_QUESTIONS = [
+  {
+    id: 1,
+    subject: 'Data Structures',
+    question: "Which of the following describes the time complexity of a recursive Fibonacci function without memoization?",
+    options: ["O(n)", "O(log n)", "O(2^n)", "O(n log n)"],
+    correct: 2,
+    explanation: "Each call results in two more recursive calls, leading to exponential growth in the total number of calls.",
+    source: "sorting_algorithms.py"
   }
-
-  const narrowed = mockQuestions.filter((question) => question.subject === subjectFocus);
-  return narrowed.length > 0 ? narrowed : mockQuestions;
-};
+];
 
 const QuizLab = () => {
   const { items } = useVault();
@@ -82,7 +46,7 @@ const QuizLab = () => {
   const [score, setScore] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [quizData, setQuizData] = useState(() => (shouldStartWithQuiz ? buildQuizQuestions(initialSubject) : []));
+  const [quizData, setQuizData] = useState([]);
   const [mastery, setMastery] = useState(0);
   const [selectedSubject, setSelectedSubject] = useState(initialSubject);
   const [handoffNotice, setHandoffNotice] = useState(
@@ -101,7 +65,7 @@ const QuizLab = () => {
         .join('\n\n');
 
       if (!context.trim()) {
-        setQuizData(buildQuizQuestions(subjectFocus));
+        setQuizData(DEFAULT_QUESTIONS);
         setQuizStarted(true);
         setCurrentQuestionIndex(0);
         setScore(0);
@@ -126,13 +90,13 @@ const QuizLab = () => {
       }
 
       const data = await response.json();
-      setQuizData(data.questions || buildQuizQuestions(subjectFocus));
+      setQuizData(data.questions || DEFAULT_QUESTIONS);
       setQuizStarted(true);
       setCurrentQuestionIndex(0);
       setScore(0);
     } catch (error) {
       console.error('Quiz generation error:', error);
-      setQuizData(buildQuizQuestions(subjectFocus));
+      setQuizData(DEFAULT_QUESTIONS);
       setQuizStarted(true);
     } finally {
       setIsGenerating(false);

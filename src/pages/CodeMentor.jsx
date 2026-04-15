@@ -64,44 +64,48 @@ print(fibonacci(10))`;
     }
   }, [initialIntent]);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
-    
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setAnalysisResult({
-        explanation: "This code implements the recursive Fibonacci sequence. While functionally correct for small values, it has exponential time complexity O(2^n). Each call results in two more calls, leading to redundant calculations of the same subproblems.",
-        bugs: [
-          { line: 8, severity: "Critical", description: "Exponential time complexity due to redundant recursive calls.", fix: "Use memoization or an iterative approach." }
-        ],
-        improvements: [
-          "Add memoization using @lru_cache to speed up recursive calls.",
-          "Use iterative approach for O(n) time and O(1) space complexity.",
-          "Add type hinting for better maintainability."
-        ],
-        complexity: { time: "O(2^n)", space: "O(n) - due to recursion stack" },
-        output: "55"
+
+    try {
+      const response = await fetch('/api/chat/code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          language,
+          analysisType: activeTab,
+        }),
       });
-    }, 1200);
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze code');
+      }
+
+      const data = await response.json();
+
+      setAnalysisResult({
+        [activeTab]: data.analysis,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      setAnalysisResult({
+        error: `Analysis failed: ${error.message}. Make sure XAI_API_KEY is configured.`,
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleApplyFix = () => {
-    const fixedCode = `from functools import lru_cache
-
-@lru_cache(maxsize=None)
-def fibonacci(n):
-    if n <= 0:
-        return 0
-    elif n == 1:
-        return 1
-    else:
-        return fibonacci(n-1) + fibonacci(n-2)
-
-# Optimized example usage
-print(fibonacci(100))`;
-    setCode(fixedCode);
-    setAnalysisResult(null);
+    // Generate fix suggestions using Grok's improve analysis
+    if (!analysisResult?.[activeTab]) {
+      setActiveTab('improve');
+      handleAnalyze();
+    }
   };
 
   const copyToClipboard = () => {

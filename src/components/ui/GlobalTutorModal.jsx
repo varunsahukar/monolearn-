@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  X, 
-  Send, 
-  Sparkles, 
-  Search, 
-  FileText, 
-  Video, 
-  Code, 
-  ChevronRight, 
-  Bot, 
+import {
+  X,
+  Send,
+  Sparkles,
+  Search,
+  FileText,
+  Video,
+  Code,
+  ChevronRight,
+  Bot,
   Zap,
   MessageSquare,
   Maximize2,
@@ -31,7 +31,7 @@ const GlobalTutorModal = ({ isOpen, onClose }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isThinking]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim() || isThinking) return;
 
     const userMsg = { role: 'user', content: input };
@@ -39,23 +39,45 @@ const GlobalTutorModal = ({ isOpen, onClose }) => {
     setInput('');
     setIsThinking(true);
 
-    setTimeout(() => {
-      const response = generateGlobalResponse(input, items);
-      setMessages(prev => [...prev, { role: 'assistant', content: response.content, citations: response.citations }]);
+    try {
+      const response = await fetch('/api/chat/knowledge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: input,
+          context: items.slice(0, 5).map(item => ({
+            name: item.name,
+            type: item.type || 'document',
+            content: item.preview || item.content || item.name,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const data = await response.json();
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.answer,
+        citations: items.slice(0, 5).map(item => ({
+          name: item.name,
+          type: item.type
+        }))
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `I encountered an error: ${error.message}. Please ensure the API is configured correctly.`,
+        citations: []
+      }]);
+    } finally {
       setIsThinking(false);
-    }, 1500);
-  };
-
-  const generateGlobalResponse = (query, vaultItems) => {
-    if (vaultItems.length === 0) {
-      return { content: "I've scanned your vault, but it's currently empty. Please upload some materials so I can assist you better.", citations: [] };
     }
-
-    const firstItem = vaultItems[0];
-    return {
-      content: `I've cross-referenced your entire vault. Your question relates to several concepts found in your ${firstItem.subject} materials. Specifically, ${firstItem.name} provides a good foundation for understanding this. Would you like me to generate a quiz based on this topic?`,
-      citations: [firstItem]
-    };
   };
 
   if (!isOpen) return null;

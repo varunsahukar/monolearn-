@@ -1,0 +1,6 @@
+{
+  "env": {
+    "VITE_API_BASE": "https://monolearn.onrender.com/api"
+  },
+  "buildCommand": "npm run build"
+}

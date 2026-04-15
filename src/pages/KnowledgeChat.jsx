@@ -81,41 +81,51 @@ const KnowledgeChat = () => {
     setInput('');
     setIsThinking(true);
 
-    // Mock AI Response Logic
-    setTimeout(() => {
-      const aiResponse = generateMockResponse(input, selectedContext);
+    try {
+      const response = await fetch('/api/chat/knowledge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: userMessage.content,
+          context: selectedContext.map(item => ({
+            name: item.name,
+            type: item.type || 'document',
+            content: item.preview || item.content || item.name,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from LLM');
+      }
+
+      const data = await response.json();
+
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: aiResponse.content,
-        citations: aiResponse.citations,
+        content: data.answer,
+        citations: selectedContext.map(c => ({ name: c.name, snippet: `From: ${c.name}` })),
         timestamp: new Date()
       }]);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: `I encountered an error: ${error.message}. Make sure the XAI_API_KEY is configured.`,
+        timestamp: new Date()
+      }]);
+    } finally {
       setIsThinking(false);
-    }, 1200);
-  };
-
-  const generateMockResponse = (query, context) => {
-    if (context.length === 0) {
-      return {
-        content: "I've analyzed your question, but I don't have any specific documents selected as context. Please attach a few files from your vault so I can give you a grounded answer.",
-        citations: []
-      };
     }
-
-    const contextNames = context.map(c => c.name).join(', ');
-    const firstFile = context[0];
-    
-    return {
-      content: `Based on the materials you've provided (${contextNames}), I can explain this for you. In ${firstFile.name}, it's mentioned that the core principles involve high efficiency and modularity. This aligns with the standard theoretical models we've discussed in our previous sessions.`,
-      citations: context.map(c => ({ name: c.name, snippet: `From: ${c.name}` }))
-    };
   };
 
   const toggleContext = (item) => {
-    setSelectedContext(prev => 
-      prev.find(i => i.id === item.id) 
-        ? prev.filter(i => i.id !== item.id) 
+    setSelectedContext(prev =>
+      prev.find(i => i.id === item.id)
+        ? prev.filter(i => i.id !== item.id)
         : [...prev, item]
     );
   };
