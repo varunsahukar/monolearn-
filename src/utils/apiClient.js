@@ -99,14 +99,13 @@ export const analyzeCode = async (code, language = 'python', analysisType = 'bug
  * @returns {Promise<object>} Answer with metadata
  */
 export const getVideoChat = async (transcript, question) => {
-  const response = await makeRequest('/video/chat', {
+  return makeRequest('/video/chat', {
     method: 'POST',
     body: JSON.stringify({
       transcript,
       question,
     }),
   })
-  return response
 }
 
 /**
