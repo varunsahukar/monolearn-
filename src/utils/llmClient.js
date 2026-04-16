@@ -1,131 +1,64 @@
 /**
- * LLM Client - Wrapper for xAI API
+ * LLM Client - Wrapper for Google Gemini API
  * Provides utilities for chat, code analysis, quiz generation, and more
  */
 
-const XAI_API_KEY = process.env.XAI_API_KEY || '';
-const XAI_API_BASE = 'https://api.x.ai/v1';
-const DEFAULT_MODEL = 'grok-2';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const DEFAULT_MODEL = 'gemini-2.0-flash';
 
-if (!XAI_API_KEY) {
-  console.warn('⚠️  XAI_API_KEY not configured. LLM features will not work.');
-}
+const getGeminiApiKey = () => process.env.GEMINI_API_KEY || '';
 
 /**
- * Make a streaming request to xAI API
- * @param {string} prompt - The prompt to send
- * @param {number} maxTokens - Max tokens in response
- * @param {function} onChunk - Callback for each streamed chunk
- * @returns {Promise<string>} Full response text
- */
-export const streamLLMResponse = async (prompt, maxTokens = 1000, onChunk = null) => {
-  if (!XAI_API_KEY) {
-    throw new Error('XAI_API_KEY not configured');
-  }
-
-  try {
-    const response = await fetch(`${XAI_API_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${XAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        max_tokens: maxTokens,
-        stream: true,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`LLM API error: ${error.error?.message || 'Unknown error'}`);
-    }
-
-    let fullText = '';
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter((line) => line.trim());
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
-
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices?.[0]?.delta?.content || '';
-            if (content) {
-              fullText += content;
-              if (onChunk) {
-                onChunk(content);
-              }
-            }
-          } catch {
-            // Ignore parsing errors
-          }
-        }
-      }
-    }
-
-    return fullText;
-  } catch (error) {
-    console.error('LLM streaming error:', error);
-    throw error;
-  }
-};
-
-/**
- * Get a complete LLM response (non-streaming)
+ * Get a complete LLM response using Gemini API
  * @param {string} prompt - The prompt to send
  * @param {number} maxTokens - Max tokens in response
  * @returns {Promise<string>} Response text
  */
 export const getLLMResponse = async (prompt, maxTokens = 1000) => {
-  if (!XAI_API_KEY) {
-    throw new Error('XAI_API_KEY not configured');
+  const GEMINI_API_KEY = getGeminiApiKey()
+  if (!GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY not configured');
   }
 
   try {
-    const response = await fetch(`${XAI_API_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${XAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
+    const response = await fetch(
+      `${GEMINI_API_BASE}/${DEFAULT_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: maxTokens,
+            temperature: 0.7,
           },
-        ],
-        max_tokens: maxTokens,
-        temperature: 0.7,
-      }),
-    });
+        }),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(`LLM API error: ${error.error?.message || 'Unknown error'}`);
+      throw new Error(
+        `Gemini API error: ${error.error?.message || 'Unknown error'}`
+      );
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || '';
+    return (
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      'No response generated'
+    );
   } catch (error) {
     console.error('LLM error:', error);
     throw error;
@@ -140,7 +73,10 @@ export const getLLMResponse = async (prompt, maxTokens = 1000) => {
  */
 export const generateKnowledgeChatResponse = async (query, contextDocs = []) => {
   const contextText = contextDocs
-    .map((doc) => `<document name="${doc.name}" type="${doc.type}">\n${doc.content}\n</document>`)
+    .map(
+      (doc) =>
+        `<document name="${doc.name}" type="${doc.type}">\n${doc.content}\n</document>`
+    )
     .join('\n\n');
 
   const prompt = `You are an expert tutor. Answer the following question based on the provided materials.
@@ -163,7 +99,11 @@ Provide a clear, comprehensive answer with specific references to the materials 
  * @param {string} analysisType - Type: 'explain', 'bugs', 'improve', 'comments'
  * @returns {Promise<string>} Analysis result
  */
-export const analyzeCode = async (code, language = 'python', analysisType = 'bugs') => {
+export const analyzeCode = async (
+  code,
+  language = 'python',
+  analysisType = 'bugs'
+) => {
   const typePrompts = {
     explain: `Explain what this ${language} code does in simple terms. Break it down line by line.`,
     bugs: `Identify potential bugs, logic errors, or performance issues in this ${language} code. List each issue with severity (high/medium/low).`,
@@ -190,7 +130,12 @@ Provide actionable, specific feedback.`;
  * @param {string} topic - Optional specific topic
  * @returns {Promise<Array>} Array of questions with options and answers
  */
-export const generateQuizQuestions = async (context, count = 5, difficulty = 'medium', topic = '') => {
+export const generateQuizQuestions = async (
+  context,
+  count = 5,
+  difficulty = 'medium',
+  topic = ''
+) => {
   const prompt = `Generate ${count} multiple-choice questions at ${difficulty} difficulty level based on the following material.
 ${topic ? `Focus on the topic of: ${topic}` : ''}
 
@@ -200,92 +145,68 @@ ${context}
 Return a JSON array with this structure:
 [
   {
-    "id": "q1",
     "question": "Question text?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "options": ["A", "B", "C", "D"],
     "correct": 0,
-    "explanation": "Why this is correct..."
+    "explanation": "Why this is correct"
   }
 ]
 
-Rules:
-- correct is the 0-indexed position of the correct option
-- Make options plausible but distinct
-- Explanations should be educational
-- Return ONLY valid JSON, no other text`;
+Return ONLY the JSON array, no other text.`;
 
-  const response = await getLLMResponse(prompt, 2000);
+  const response = await getLLMResponse(prompt, 3000);
 
   try {
-    // Extract JSON from response
-    const jsonMatch = response.match(/\[[\s\S]*\]/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    throw new Error('No valid JSON found in response');
-  } catch (error) {
-    console.error('Quiz generation parse error:', error);
-    return [];
+    return JSON.parse(response);
+  } catch {
+    return [
+      {
+        question: 'Failed to generate questions',
+        options: ['Error'],
+        correct: 0,
+        explanation: response,
+      },
+    ];
   }
 };
 
 /**
- * Answer a question grounded in transcript
- * @param {Array} transcript - Transcript blocks
+ * Answer a question about a video transcript
+ * @param {Array} transcript - Video transcript blocks
  * @param {string} question - User question
- * @returns {Promise<Object>} Answer with grounding info
+ * @returns {Promise<object>} Answer with metadata
  */
 export const answerVideoQuestion = async (transcript, question) => {
   const transcriptText = transcript
-    .map((block) => `[${block.startLabel}] ${block.text}`)
-    .join('\n');
+    .map((block) => `[${block.offset}ms] ${block.text}`)
+    .join(' ');
 
-  const prompt = `You are helping a student understand a video. Answer their question based ONLY on the transcript provided.
+  const prompt = `Based on this video transcript, answer the following question:
 
 Transcript:
 ${transcriptText}
 
-Student question: ${question}
+Question: ${question}
 
-Provide a clear answer that references specific parts of the transcript. Format timestamps as [HH:MM:SS] or [MM:SS].`;
+Provide a clear, concise answer with timestamps if relevant.`;
 
-  const answer = await getLLMResponse(prompt, 1000);
+  const answer = await getLLMResponse(prompt, 1500);
 
   return {
     answer,
-    source: 'transcript',
+    questionAsked: question,
     timestamp: new Date().toISOString(),
   };
 };
 
-/**
- * Extract citations from LLM response
- * @param {string} response - LLM response text
- * @param {Array} possibleSources - Available source documents
- * @returns {Array} Citations found in response
- */
-export const extractCitations = (response, possibleSources = []) => {
-  const citations = [];
-  const sourceNames = possibleSources.map((s) => s.name || s).filter(Boolean);
-
-  for (const source of sourceNames) {
-    if (response.includes(source) || response.toLowerCase().includes(source.toLowerCase())) {
-      citations.push({
-        source,
-        relevance: 'mentioned',
-      });
-    }
-  }
-
-  return citations;
-};
+// Legacy export for backwards compatibility
+export const streamLLMResponse = getLLMResponse;
 
 export default {
   getLLMResponse,
-  streamLLMResponse,
   generateKnowledgeChatResponse,
   analyzeCode,
   generateQuizQuestions,
   answerVideoQuestion,
-  extractCitations,
+  streamLLMResponse,
 };

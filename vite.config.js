@@ -11,6 +11,9 @@ export default defineConfig({
   define: {
     'process.env.VITE_API_BASE': JSON.stringify(apiBase),
   },
+  build: {
+    chunkSizeWarningLimit: 2000,
+  },
   server: {
     proxy: {
       '/api': {

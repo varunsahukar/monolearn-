@@ -1,3 +1,6 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
 import { createReadStream, existsSync } from 'node:fs';
 import { promises as fs } from 'node:fs';
 import http from 'node:http';
@@ -76,12 +79,6 @@ const handleKnowledgeChat = async (body, response) => {
       return;
     }
 
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'no-store',
-    });
-
     const answer = await generateKnowledgeChatResponse(query, context);
     const result = {
       answer,
@@ -89,6 +86,11 @@ const handleKnowledgeChat = async (body, response) => {
       timestamp: new Date().toISOString(),
     };
 
+    response.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-store',
+    });
     response.end(JSON.stringify(result));
   } catch (error) {
     sendJson(response, 500, {
@@ -106,11 +108,6 @@ const handleCodeAnalysis = async (body, response) => {
       return;
     }
 
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    });
-
     const analysis = await analyzeCode(code, language, analysisType);
     const result = {
       code: code.substring(0, 200) + '...', // Truncate for response
@@ -120,6 +117,10 @@ const handleCodeAnalysis = async (body, response) => {
       timestamp: new Date().toISOString(),
     };
 
+    response.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
     response.end(JSON.stringify(result));
   } catch (error) {
     sendJson(response, 500, {
@@ -137,11 +138,6 @@ const handleQuizGeneration = async (body, response) => {
       return;
     }
 
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    });
-
     const questions = await generateQuizQuestions(context, count, difficulty, topic);
     const result = {
       questions,
@@ -151,6 +147,10 @@ const handleQuizGeneration = async (body, response) => {
       timestamp: new Date().toISOString(),
     };
 
+    response.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
     response.end(JSON.stringify(result));
   } catch (error) {
     sendJson(response, 500, {
@@ -168,14 +168,13 @@ const handleVideoChat = async (body, response) => {
       return;
     }
 
+    const result = await answerVideoQuestion(transcript, question);
+    result.transcriptLength = transcript.length;
+
     response.writeHead(200, {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
     });
-
-    const result = await answerVideoQuestion(transcript, question);
-    result.transcriptLength = transcript.length;
-
     response.end(JSON.stringify(result));
   } catch (error) {
     sendJson(response, 500, {
@@ -424,6 +423,7 @@ const serveIndex = async (response) => {
 
 const server = http.createServer(async (request, response) => {
   const requestUrl = new URL(request.url, `http://${request.headers.host}`);
+  console.log(`[API Request] ${request.method} ${requestUrl.pathname}`);
 
   if (requestUrl.pathname === '/api/health') {
     sendJson(response, 200, { ok: true });

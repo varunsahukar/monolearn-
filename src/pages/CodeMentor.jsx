@@ -93,7 +93,7 @@ print(fibonacci(10))`;
       });
     } catch (error) {
       setAnalysisResult({
-        error: `Analysis failed: ${error.message}. Make sure XAI_API_KEY is configured.`,
+        error: `Analysis failed: ${error.message}. Make sure GEMINI_API_KEY is configured.`,
       });
     } finally {
       setIsAnalyzing(false);

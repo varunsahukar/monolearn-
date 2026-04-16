@@ -13,6 +13,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || `${window.location.origin}/api
  */
 const makeRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE}${endpoint}`
+  console.log(`[API Request] ${options.method || 'GET'} ${url}`, { options })
 
   try {
     const response = await fetch(url, {
@@ -25,10 +26,13 @@ const makeRequest = async (endpoint, options = {}) => {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+      console.error(`[API Error] ${options.method || 'GET'} ${url}`, { status: response.status, error })
       throw new Error(error.error || `API Error: ${response.status}`)
     }
 
-    return await response.json()
+    const data = await response.json()
+    console.log(`[API Response] ${options.method || 'GET'} ${url}`, { status: response.status, data })
+    return data
   } catch (error) {
     console.error(`API request failed (${endpoint}):`, error)
     throw error
@@ -44,7 +48,7 @@ const makeRequest = async (endpoint, options = {}) => {
  * @returns {Promise<Array>} Array of quiz questions
  */
 export const generateQuiz = async (context, count = 5, difficulty = 'medium', topic = '') => {
-  const response = await makeRequest('/quiz/generate', {
+  const response = await makeRequest('/api/quiz/generate', {
     method: 'POST',
     body: JSON.stringify({
       context,
@@ -63,7 +67,7 @@ export const generateQuiz = async (context, count = 5, difficulty = 'medium', to
  * @returns {Promise<string>} Answer with citations
  */
 export const getKnowledgeChat = async (query, context = []) => {
-  const response = await makeRequest('/chat/knowledge', {
+  const response = await makeRequest('/api/chat/knowledge', {
     method: 'POST',
     body: JSON.stringify({
       query,
@@ -81,7 +85,7 @@ export const getKnowledgeChat = async (query, context = []) => {
  * @returns {Promise<string>} Analysis result
  */
 export const analyzeCode = async (code, language = 'python', analysisType = 'bugs') => {
-  const response = await makeRequest('/chat/code', {
+  const response = await makeRequest('/api/chat/code', {
     method: 'POST',
     body: JSON.stringify({
       code,
@@ -99,7 +103,7 @@ export const analyzeCode = async (code, language = 'python', analysisType = 'bug
  * @returns {Promise<object>} Answer with metadata
  */
 export const getVideoChat = async (transcript, question) => {
-  return makeRequest('/video/chat', {
+  return makeRequest('/api/video/chat', {
     method: 'POST',
     body: JSON.stringify({
       transcript,
@@ -114,7 +118,7 @@ export const getVideoChat = async (transcript, question) => {
  * @returns {Promise<object>} Video analysis with transcript and insights
  */
 export const analyzeYouTubeVideo = async (url) => {
-  const response = await makeRequest(`/youtube/analyze?url=${encodeURIComponent(url)}`)
+  const response = await makeRequest(`/api/youtube/analyze?url=${encodeURIComponent(url)}`)
   return response.analysis || {}
 }
 
@@ -124,7 +128,7 @@ export const analyzeYouTubeVideo = async (url) => {
  */
 export const checkApiHealth = async () => {
   try {
-    const response = await makeRequest('/health')
+    const response = await makeRequest('/api/health')
     return response.ok === true
   } catch {
     return false
