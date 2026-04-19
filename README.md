@@ -25,12 +25,12 @@ Solo Tutor operates on a local-first philosophy. Vault data stays in local brows
 
 ##  Getting Started
 
-1. Clone the repository.
-2. Install dependencies: `npm install`.
-3. Start the development server: `npm run dev`.
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start the development server: `npm run dev`
 4. Launch the Neural Vault and start building your knowledge base.
 
-`npm run dev` now auto-selects open ports for both the API and Vite when `8787` or `5173` are already occupied. You can still force specific ports with `API_PORT=8788 npm run dev` or `VITE_PORT=5174 npm run dev`.
+`npm run dev` now auto-selects open ports for both the API and Vite when `8787` or `5173` are already occupied. You can still force specific ports with `API_PORT=8788 npm run dev` or `VITE_PORT=5174 npm run dev`
 
 ---
 Built with for the next generation of learners.
