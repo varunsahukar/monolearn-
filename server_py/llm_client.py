@@ -2,7 +2,7 @@ import os
 import httpx
 
 # Configuration for the Hugging Face Inference API
-HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+HF_API_URL = "https://api-inference.huggingface.co/models/google/gemma-7b"
 HF_API_KEY = os.environ.get('HUGGINGFACE_API_KEY')
 
 async def get_llm_response(prompt: str):
