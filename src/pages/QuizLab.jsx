@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   HelpCircle,
   Sparkles,
@@ -38,9 +38,7 @@ const QuizLab = () => {
     const intent = getPendingIntent();
     return intent?.page === 'quiz' ? intent : null;
   });
-  const initialSubject = initialIntent?.payload?.subject || 'all';
   const shouldStartWithQuiz = Boolean(initialIntent?.payload?.autoGenerate && items.length > 0);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [quizStarted, setQuizStarted] = useState(shouldStartWithQuiz);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -48,66 +46,9 @@ const QuizLab = () => {
   const [showExplanation, setShowExplanation] = useState(false);
   const [quizData, setQuizData] = useState([]);
   const [mastery, setMastery] = useState(0);
-  const [selectedSubject, setSelectedSubject] = useState(initialSubject);
   const [handoffNotice, setHandoffNotice] = useState(
     initialIntent?.payload?.notice || '',
   );
-
-  const subjects = ['all', ...new Set(items.map(item => item.subject).filter(Boolean))];
-
-  const generateQuiz = useCallback(async (subjectFocus = selectedSubject) => {
-    setIsGenerating(true);
-
-    try {
-      // Prepare context from vault items
-      const context = items
-        .map((item) => `${item.name} (${item.type}): ${item.preview || item.content || ''}`)
-        .join('\n\n');
-
-      if (!context.trim()) {
-        setQuizData(DEFAULT_QUESTIONS);
-        setQuizStarted(true);
-        setCurrentQuestionIndex(0);
-        setScore(0);
-        return;
-      }
-
-      const response = await fetch('/api/quiz/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          context,
-          count: 5,
-          difficulty: 'medium',
-          topic: subjectFocus === 'all' ? '' : subjectFocus,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate quiz');
-      }
-
-      const data = await response.json();
-      setQuizData(data.questions || DEFAULT_QUESTIONS);
-      setQuizStarted(true);
-      setCurrentQuestionIndex(0);
-      setScore(0);
-    } catch (error) {
-      console.error('Quiz generation error:', error);
-      setQuizData(DEFAULT_QUESTIONS);
-      setQuizStarted(true);
-    } finally {
-      setIsGenerating(false);
-      setSelectedOption(null);
-      setShowExplanation(false);
-    }
-  }, [selectedSubject, items]);
-
-  const handleGenerate = useCallback(() => {
-    generateQuiz(selectedSubject);
-  }, [generateQuiz, selectedSubject]);
 
   useEffect(() => {
     if (initialIntent) {
@@ -159,8 +100,7 @@ const QuizLab = () => {
         </div>
       )}
 
-      {!isGenerating && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-card border border-border/40 rounded-3xl p-6 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-secondary rounded-2xl">
               <Trophy className="w-5 h-5 text-foreground" />
@@ -189,7 +129,6 @@ const QuizLab = () => {
             </div>
           </div>
         </div>
-      )}
 
       {quizStarted && (
         <div className="space-y-8 pb-12">

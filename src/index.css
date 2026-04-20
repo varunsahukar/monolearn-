@@ -98,7 +98,7 @@
 
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --ring: 0 0% 82.3%;
   }
 }
 
@@ -107,85 +107,14 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground transition-colors duration-300 antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground;
   }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/30;
-}
-
-.no-scrollbar::-webkit-scrollbar,
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar,
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-@keyframes scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-@keyframes neural-float {
-  0%, 100% {
-    transform: translateY(0);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
-  }
-  50% {
-    transform: translateY(-4px);
-    box-shadow: 0 34px 110px rgba(0, 0, 0, 0.52);
-  }
-}
-
-@keyframes neural-edge-flow {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -120;
-  }
-}
-
-.animate-scroll {
-  animation: scroll 40s linear infinite;
-}
-
-.animate-neural-float {
-  animation: neural-float 9s ease-in-out infinite;
-}
-
-.animate-neural-edge-flow {
-  animation: neural-edge-flow 8s linear infinite;
-}
-
-.glass {
-  @apply bg-background/60 backdrop-blur-xl border border-border;
-}
-
-.dark .glass {
-  @apply bg-black/40 backdrop-blur-xl border border-white/5;
-}
-
-.claude-card {
-  @apply bg-card border border-border rounded-xl transition-all duration-200 hover:border-primary/20;
+.grid-background {
+  background-color: hsl(var(--background));
+  background-image:
+    linear-gradient(to right, hsl(var(--border) / 0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border) / 0.4) 1px, transparent 1px);
+  background-size: 40px 40px;
 }

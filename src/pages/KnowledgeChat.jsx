@@ -114,7 +114,7 @@ const KnowledgeChat = () => {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `I encountered an error: ${error.message}. Make sure the GEMINI_API_KEY is configured.`,
+        content: `I encountered an error: ${error.message}. Please check your connection and try again.`,
         timestamp: new Date()
       }]);
     } finally {

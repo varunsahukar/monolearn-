@@ -1,112 +1,70 @@
 import os
-import json
-from huggingface_hub import InferenceClient
-from fastapi.concurrency import run_in_threadpool
+import httpx
 
-def get_huggingface_api_key():
-    return os.environ.get('HUGGINGFACE_API_KEY', '')
+# Configuration for the Hugging Face Inference API
+HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+HF_API_KEY = os.environ.get('HUGGINGFACE_API_KEY')
 
-async def get_llm_response(prompt: str, max_tokens: int = 1000):
-    HUGGINGFACE_API_KEY = get_huggingface_api_key()
-    if not HUGGINGFACE_API_KEY:
+async def get_llm_response(prompt: str):
+    """
+    Sends a prompt to the Hugging Face Inference API and gets a response.
+    """
+    if not HF_API_KEY:
         raise ValueError('HUGGINGFACE_API_KEY not configured')
 
-    client = InferenceClient(token=HUGGINGFACE_API_KEY)
+    headers = {
+        "Authorization": f"Bearer {HF_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {"inputs": prompt}
 
-    def sync_text_generation():
-        """Synchronous function to be run in a thread pool."""
-        return client.text_generation(
-            prompt=prompt,
-            model="mistralai/Mistral-7B-Instruct-v0.1",
-            max_new_tokens=max_tokens
-        )
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(HF_API_URL, headers=headers, json=payload, timeout=30.0)
+            response.raise_for_status()  # Raise an exception for bad status codes
+            result = response.json()
+            # Extract the generated text from the response
+            if result and isinstance(result, list) and "generated_text" in result[0]:
+                return result[0]["generated_text"]
+            else:
+                raise ValueError("Unexpected response format from LLM API")
+        except httpx.HTTPStatusError as e:
+            print(f"LLM API request failed with status {e.response.status_code}: {e.response.text}")
+            raise
+        except Exception as e:
+            print(f'LLM error: {e}')
+            raise
 
-    try:
-        # Run the synchronous function in a separate thread to avoid blocking the event loop
-        response = await run_in_threadpool(sync_text_generation)
-        return response
-    except Exception as e:
-        print(f'LLM error: {e}')
-        raise
-
-async def generate_knowledge_chat_response(query: str, context_docs: list | None = None):
-    if context_docs is None:
-        context_docs = []
-    context_text = "\n\n".join(
-        [f'<document name="{doc.get("name")}" type="{doc.get("type")}">\n{doc.get("content")}\n</document>' for doc in context_docs]
-    )
-    prompt = f"""You are an expert tutor. Answer the following question based on the provided materials.
-If information from the materials is relevant, explicitly cite which material(s) you're using.
-
-Materials:
-{context_text}
-
-Student question: {query}
-
-Provide a clear, comprehensive answer with specific references to the materials where applicable."""
-    return await get_llm_response(prompt, 1500)
+async def generate_chat_response(prompt: str):
+    """
+    Generates a direct response to a user's prompt.
+    """
+    # For a simple chat, we can directly use the user's prompt.
+    # For more complex scenarios, you might add a system prompt here.
+    return await get_llm_response(prompt)
 
 async def analyze_code(code: str, language: str = 'python', analysis_type: str = 'bugs'):
+    """
+    Analyzes a code snippet for bugs, improvements, or explanations.
+    """
     type_prompts = {
-        'explain': f'Explain what this {language} code does in simple terms. Break it down line by line.',
-        'bugs': f'Identify potential bugs, logic errors, or performance issues in this {language} code. List each issue with severity (high/medium/low).',
-        'improve': f'Suggest optimizations and improvements for this {language} code. Include time/space complexity analysis.',
-        'comments': f'Generate meaningful, clear comments for this {language} code. Follow best practices for the language.',
+        'explain': f'Explain what this {language} code does in simple terms.',
+        'bugs': f'Identify potential bugs or logic errors in this {language} code.',
+        'improve': f'Suggest improvements for this {language} code.',
     }
     prompt = f"""{type_prompts.get(analysis_type, type_prompts['explain'])}
 
 ```{language}
 {code}
-```
+```"""
+    return await get_llm_response(prompt)
 
-Provide actionable, specific feedback."""
-    return await get_llm_response(prompt, 2000)
+async def summarize_video(transcript: list):
+    """
+    Summarizes the content of a video based on its transcript.
+    """
+    transcript_text = " ".join([block.get("text", "") for block in transcript])
+    prompt = f"""Summarize the key points of the following video transcript:
 
-async def generate_quiz_questions(context: str, count: int = 5, difficulty: str = 'medium', topic: str = ''):
-    topic_prompt = f'Focus on the topic of: {topic}' if topic else ''
-    prompt = f"""Generate {count} multiple-choice questions at {difficulty} difficulty level based on the following material.
-{topic_prompt}
-
-Material:
-{context}
-
-Return a JSON array with this structure:
-[
-  {{
-    "question": "Question text?",
-    "options": ["A", "B", "C", "D"],
-    "correct": 0,
-    "explanation": "Why this is correct"
-  }}
-]
-
-Return ONLY the JSON array, no other text."""
-    response = await get_llm_response(prompt, 3000)
-    try:
-        return json.loads(response)
-    except json.JSONDecodeError:
-        return [
-            {
-                'question': 'Failed to generate questions',
-                'options': ['Error'],
-                'correct': 0,
-                'explanation': response,
-            }
-        ]
-
-async def answer_video_question(transcript: list, question: str):
-    transcript_text = " ".join([f'[{block.get("offset")}ms] {block.get("text")}' for block in transcript])
-    prompt = f"""Based on this video transcript, answer the following question:
-
-Transcript:
-{transcript_text}
-
-Question: {question}
-
-Provide a clear, concise answer with timestamps if relevant."""
-    answer = await get_llm_response(prompt, 1500)
-    return {
-        'answer': answer,
-        'questionAsked': question,
-        'timestamp': '2026-04-20T00:00:00Z',
-    }
+{transcript_text}"""
+    return await get_llm_response(prompt)

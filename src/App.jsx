@@ -85,7 +85,7 @@ function App() {
       />
       
       <main className={cn(
-        "flex-1 flex flex-col transition-all duration-300",
+        "flex-1 flex flex-col transition-all duration-300 grid-background",
         isSidebarCollapsed ? "ml-20" : "ml-64"
       )}>
         <Navbar 

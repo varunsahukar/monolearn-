@@ -12,13 +12,7 @@ import { buildVideoAnalysis, extractYouTubeVideoId } from '../src/utils/videoInt
 import SpeechModule from '@google-cloud/speech';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
-import {
-  getLLMResponse,
-  generateKnowledgeChatResponse,
-  analyzeCode,
-  generateQuizQuestions,
-  answerVideoQuestion,
-} from '../src/utils/llmClient.js';
+
 
 const { SpeechClient } = SpeechModule;
 
@@ -38,8 +32,8 @@ if (projectId && keyFilePath) {
       projectId,
       keyFilename: keyFilePath,
     });
-  } catch (error) {
-    console.warn('Failed to initialize Google Cloud Speech-to-Text:', error.message);
+  } catch (_error) {
+    console.warn('Failed to initialize Google Cloud Speech-to-Text:', _error.message);
   }
 } else {
   console.warn('Google Cloud Speech-to-Text not configured. Videos with disabled captions will not be transcribed.');
@@ -92,96 +86,14 @@ const handleKnowledgeChat = async (body, response) => {
       'Cache-Control': 'no-store',
     });
     response.end(JSON.stringify(result));
-  } catch (error) {
+  } catch (_error) {
     sendJson(response, 500, {
-      error: `Knowledge chat failed: ${error.message}`,
+      error: `Knowledge chat failed: ${_error.message}`,
     });
   }
 };
 
-const handleCodeAnalysis = async (body, response) => {
-  try {
-    const { code, language = 'python', analysisType = 'bugs' } = JSON.parse(body);
 
-    if (!code) {
-      sendJson(response, 400, { error: 'Missing code parameter' });
-      return;
-    }
-
-    const analysis = await analyzeCode(code, language, analysisType);
-    const result = {
-      code: code.substring(0, 200) + '...', // Truncate for response
-      language,
-      analysisType,
-      analysis,
-      timestamp: new Date().toISOString(),
-    };
-
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    });
-    response.end(JSON.stringify(result));
-  } catch (error) {
-    sendJson(response, 500, {
-      error: `Code analysis failed: ${error.message}`,
-    });
-  }
-};
-
-const handleQuizGeneration = async (body, response) => {
-  try {
-    const { context = '', count = 5, difficulty = 'medium', topic = '' } = JSON.parse(body);
-
-    if (!context) {
-      sendJson(response, 400, { error: 'Missing context parameter' });
-      return;
-    }
-
-    const questions = await generateQuizQuestions(context, count, difficulty, topic);
-    const result = {
-      questions,
-      count: questions.length,
-      difficulty,
-      topic,
-      timestamp: new Date().toISOString(),
-    };
-
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    });
-    response.end(JSON.stringify(result));
-  } catch (error) {
-    sendJson(response, 500, {
-      error: `Quiz generation failed: ${error.message}`,
-    });
-  }
-};
-
-const handleVideoChat = async (body, response) => {
-  try {
-    const { transcript = [], question } = JSON.parse(body);
-
-    if (!question || !transcript.length) {
-      sendJson(response, 400, { error: 'Missing question or transcript' });
-      return;
-    }
-
-    const result = await answerVideoQuestion(transcript, question);
-    result.transcriptLength = transcript.length;
-
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    });
-    response.end(JSON.stringify(result));
-  } catch (error) {
-    sendJson(response, 500, {
-      error: `Video chat failed: ${error.message}`,
-    });
-  }
-};
 
 const fetchYouTubeMetadata = async (url) => {
   const response = await fetch(
@@ -198,11 +110,11 @@ const fetchYouTubeMetadata = async (url) => {
 const fetchPreferredTranscript = async (url) => {
   try {
     return await fetchTranscript(url, { lang: 'en' });
-  } catch (error) {
+  } catch {
     try {
       return await fetchTranscript(url);
-    } catch (fallbackError) {
-      const errorMessage = fallbackError?.message || String(fallbackError);
+    } catch (_fallbackError) {
+      const errorMessage = _fallbackError?.message || String(_fallbackError);
       if (
         errorMessage.includes('disabled') ||
         errorMessage.includes('not available') ||
@@ -210,7 +122,7 @@ const fetchPreferredTranscript = async (url) => {
       ) {
         throw new Error('Transcripts are disabled on this video.');
       }
-      throw fallbackError;
+      throw _fallbackError;
     }
   }
 };
@@ -239,8 +151,8 @@ const downloadYouTubeAudio = async (url) => {
     }
 
     return audioFilePath;
-  } catch (error) {
-    throw new Error(`Failed to download YouTube audio: ${error.message}`);
+  } catch (_error) {
+    throw new Error(`Failed to download YouTube audio: ${_error.message}`);
   }
 };
 
@@ -317,14 +229,14 @@ const transcribeAudioWithGoogleCloud = async (audioFilePath) => {
     }
 
     return transcript;
-  } catch (error) {
+  } catch (_error) {
     // Clean up temp file on error
     try {
       await fs.unlink(audioFilePath);
     } catch {
       // Ignore cleanup errors
     }
-    throw new Error(`Speech-to-text transcription failed: ${error.message}`);
+    throw new Error(`Speech-to-text transcription failed: ${_error.message}`);
   }
 };
 
@@ -339,7 +251,7 @@ const generateTranscriptWithFallback = async (url) => {
         console.log('YouTube captions unavailable. Attempting audio transcription...');
         const audioPath = await downloadYouTubeAudio(url);
         return await transcribeAudioWithGoogleCloud(audioPath);
-      } catch (sttError) {
+      } catch {
         // If STT also fails, throw the original YouTube error for better UX
         throw youtubeError;
       }
@@ -382,11 +294,11 @@ const handleAnalyze = async (requestUrl, response) => {
     });
 
     sendJson(response, 200, { analysis });
-  } catch (error) {
+  } catch (_error) {
     sendJson(response, 500, {
       error:
-        error instanceof Error
-          ? error.message
+        _error instanceof Error
+          ? _error.message
           : 'YouTube analysis failed. Please try another public video with captions.',
     });
   }
@@ -430,50 +342,7 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
-  // LLM Chat Endpoints
-  if (request.method === 'POST' && requestUrl.pathname === '/api/chat/knowledge') {
-    let body = '';
-    request.on('data', (chunk) => {
-      body += chunk;
-    });
-    request.on('end', () => {
-      handleKnowledgeChat(body, response);
-    });
-    return;
-  }
 
-  if (request.method === 'POST' && requestUrl.pathname === '/api/chat/code') {
-    let body = '';
-    request.on('data', (chunk) => {
-      body += chunk;
-    });
-    request.on('end', () => {
-      handleCodeAnalysis(body, response);
-    });
-    return;
-  }
-
-  if (request.method === 'POST' && requestUrl.pathname === '/api/quiz/generate') {
-    let body = '';
-    request.on('data', (chunk) => {
-      body += chunk;
-    });
-    request.on('end', () => {
-      handleQuizGeneration(body, response);
-    });
-    return;
-  }
-
-  if (request.method === 'POST' && requestUrl.pathname === '/api/video/chat') {
-    let body = '';
-    request.on('data', (chunk) => {
-      body += chunk;
-    });
-    request.on('end', () => {
-      handleVideoChat(body, response);
-    });
-    return;
-  }
 
   if (request.method === 'GET' && requestUrl.pathname === '/api/youtube/analyze') {
     await handleAnalyze(requestUrl, response);
@@ -494,8 +363,8 @@ const server = http.createServer(async (request, response) => {
   sendJson(response, 404, { error: 'Not found.' });
 });
 
-server.on('error', (error) => {
-  if (error && error.code === 'EADDRINUSE') {
+server.on('error', (_error) => {
+  if (_error && _error.code === 'EADDRINUSE') {
     console.error(
       `Port ${PORT} is already in use. Set PORT to another value or use "npm run dev" to auto-select an open port.`,
     );
@@ -503,7 +372,7 @@ server.on('error', (error) => {
     return;
   }
 
-  console.error(error);
+  console.error(_error);
   process.exit(1);
 });
 

@@ -3,17 +3,17 @@
  * Uses the Grok-powered endpoints from server/index.js
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE || `${window.location.origin}/api`
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 /**
  * Make a request to the backend API
- * @param {string} endpoint - API endpoint (e.g., '/chat/knowledge')
+ * @param {string} endpoint - API endpoint (e.g., '/api/llm/chat')
  * @param {object} options - Fetch options (method, body, headers, etc.)
  * @returns {Promise<object>} API response
  */
 const makeRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE}${endpoint}`
-  console.log(`[API Request] ${options.method || 'GET'} ${url}`, { options })
+  const url = `${API_BASE}${endpoint}`;
+  console.log(`[API Request] ${options.method || 'GET'} ${url}`, { options });
 
   try {
     const response = await fetch(url, {
@@ -22,124 +22,64 @@ const makeRequest = async (endpoint, options = {}) => {
         ...options.headers,
       },
       ...options,
-    })
+    });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-      console.error(`[API Error] ${options.method || 'GET'} ${url}`, { status: response.status, error })
-      throw new Error(error.error || `API Error: ${response.status}`)
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error(`[API Error] ${options.method || 'GET'} ${url}`, { status: response.status, error });
+      throw new Error(error.error || `API Error: ${response.status}`);
     }
 
-    const data = await response.json()
-    console.log(`[API Response] ${options.method || 'GET'} ${url}`, { status: response.status, data })
-    return data
+    const data = await response.json();
+    console.log(`[API Response] ${options.method || 'GET'} ${url}`, { status: response.status, data });
+    return data;
   } catch (error) {
-    console.error(`API request failed (${endpoint}):`, error)
-    throw error
+    console.error(`API request failed (${endpoint}):`, error);
+    throw error;
   }
-}
+};
 
 /**
- * Generate quiz questions from context
- * @param {string} context - Material to generate questions from
- * @param {number} count - Number of questions
- * @param {string} difficulty - 'easy', 'medium', 'hard'
- * @param {string} topic - Optional specific topic
- * @returns {Promise<Array>} Array of quiz questions
+ * Get a response from the LLM chat.
+ * @param {string} prompt - The user's prompt.
+ * @returns {Promise<string>} The LLM's response.
  */
-export const generateQuiz = async (context, count = 5, difficulty = 'medium', topic = '') => {
-  const response = await makeRequest('/api/quiz/generate', {
+export const getChatResponse = async (prompt) => {
+  const response = await makeRequest('/api/llm/chat', {
     method: 'POST',
-    body: JSON.stringify({
-      context,
-      count,
-      difficulty,
-      topic,
-    }),
-  })
-  return response.questions || []
-}
+    body: JSON.stringify({ prompt }),
+  });
+  return response.response || '';
+};
 
 /**
- * Get knowledge chat response with vault context
- * @param {string} query - User question
- * @param {Array} context - Vault documents as context
- * @returns {Promise<string>} Answer with citations
+ * Analyze code.
+ * @param {string} code - The code to analyze.
+ * @returns {Promise<string>} The analysis of the code.
  */
-export const getKnowledgeChat = async (query, context = []) => {
-  const response = await makeRequest('/api/chat/knowledge', {
+export const analyzeCode = async (code) => {
+  const response = await makeRequest('/api/code/analyze', {
     method: 'POST',
-    body: JSON.stringify({
-      query,
-      context,
-    }),
-  })
-  return response.answer || ''
-}
+    body: JSON.stringify({ code }),
+  });
+  return response.response || '';
+};
 
 /**
- * Analyze code with Grok
- * @param {string} code - Code to analyze
- * @param {string} language - Programming language
- * @param {string} analysisType - Type: 'explain', 'bugs', 'improve', 'comments'
- * @returns {Promise<string>} Analysis result
+ * Summarize a video from its transcript.
+ * @param {string} transcript - The video transcript.
+ * @returns {Promise<string>} The summary of the video.
  */
-export const analyzeCode = async (code, language = 'python', analysisType = 'bugs') => {
-  const response = await makeRequest('/api/chat/code', {
+export const summarizeVideo = async (transcript) => {
+  const response = await makeRequest('/api/video/summarize', {
     method: 'POST',
-    body: JSON.stringify({
-      code,
-      language,
-      analysisType,
-    }),
-  })
-  return response.analysis || ''
-}
-
-/**
- * Get video Q&A response based on transcript
- * @param {Array} transcript - Transcript blocks
- * @param {string} question - User question
- * @returns {Promise<object>} Answer with metadata
- */
-export const getVideoChat = async (transcript, question) => {
-  return makeRequest('/api/video/chat', {
-    method: 'POST',
-    body: JSON.stringify({
-      transcript,
-      question,
-    }),
-  })
-}
-
-/**
- * Analyze YouTube video
- * @param {string} url - YouTube URL
- * @returns {Promise<object>} Video analysis with transcript and insights
- */
-export const analyzeYouTubeVideo = async (url) => {
-  const response = await makeRequest(`/api/youtube/analyze?url=${encodeURIComponent(url)}`)
-  return response.analysis || {}
-}
-
-/**
- * Health check the API
- * @returns {Promise<boolean>} Whether API is healthy
- */
-export const checkApiHealth = async () => {
-  try {
-    const response = await makeRequest('/api/health')
-    return response.ok === true
-  } catch {
-    return false
-  }
-}
+    body: JSON.stringify({ transcript }),
+  });
+  return response.response || '';
+};
 
 export default {
-  generateQuiz,
-  getKnowledgeChat,
+  getChatResponse,
   analyzeCode,
-  getVideoChat,
-  analyzeYouTubeVideo,
-  checkApiHealth,
-}
+  summarizeVideo,
+};
