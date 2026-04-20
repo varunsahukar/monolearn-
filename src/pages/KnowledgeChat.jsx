@@ -17,6 +17,7 @@ import {
 import { useVault } from '../hooks/useVault';
 import { clearPendingIntent, getPendingIntent } from '../utils/studyIntent';
 import { cn } from '../utils/cn';
+import { generateKnowledgeChatResponse } from '../utils/llmClient.js';
 
 const KnowledgeChat = () => {
   const { items } = useVault();
@@ -82,35 +83,22 @@ const KnowledgeChat = () => {
     setIsThinking(true);
 
     try {
-      const response = await fetch('/api/chat/knowledge', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: userMessage.content,
-          context: selectedContext.map(item => ({
-            name: item.name,
-            type: item.type || 'document',
-            content: item.preview || item.content || item.name,
-          })),
-        }),
-      });
+        const response = await generateKnowledgeChatResponse(userMessage.content, selectedContext);
 
-      if (!response.ok) {
-        throw new Error('Failed to get response from LLM');
-      }
+        if (!response) {
+          throw new Error('Failed to get response from LLM');
+        }
 
-      const data = await response.json();
+        const assistantMessage = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: response.answer,
+          context: response.context,
+          timestamp: new Date(response.timestamp),
+        };
 
-      setMessages(prev => [...prev, {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: data.answer,
-        citations: selectedContext.map(c => ({ name: c.name, snippet: `From: ${c.name}` })),
-        timestamp: new Date()
-      }]);
-    } catch (error) {
+        setMessages(prev => [...prev, assistantMessage]);
+      } catch (error) {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',

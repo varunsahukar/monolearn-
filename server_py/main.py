@@ -42,8 +42,9 @@ async def knowledge_chat(request: Request):
                 if not query:
                     return {"error": "Missing query parameter"}
 
-                # Generate response (we'll implement this later)
-                answer = "This is a placeholder response. We'll integrate with Gemini API soon."
+                context_str = "\n".join([f"- {c.get('name')}: {c.get('content', '')}" for c in context])
+                prompt = f"Answer the following question based on the provided context:\n\nContext:\n{context_str}\n\nQuestion: {query}"
+                answer = await get_llm_response(prompt)
 
                 return {
                     "answer": answer,
