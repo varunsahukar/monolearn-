@@ -1,7 +1,7 @@
 import os
-import httpx
 import json
 from huggingface_hub import InferenceClient
+from fastapi.concurrency import run_in_threadpool
 
 def get_huggingface_api_key():
     return os.environ.get('HUGGINGFACE_API_KEY', '')
@@ -12,12 +12,18 @@ async def get_llm_response(prompt: str, max_tokens: int = 1000):
         raise ValueError('HUGGINGFACE_API_KEY not configured')
 
     client = InferenceClient(token=HUGGINGFACE_API_KEY)
-    try:
-        response = client.text_generation(
+
+    def sync_text_generation():
+        """Synchronous function to be run in a thread pool."""
+        return client.text_generation(
             prompt=prompt,
             model="mistralai/Mistral-7B-Instruct-v0.1",
-            max_new_tokens=max_tokens,
+            max_new_tokens=max_tokens
         )
+
+    try:
+        # Run the synchronous function in a separate thread to avoid blocking the event loop
+        response = await run_in_threadpool(sync_text_generation)
         return response
     except Exception as e:
         print(f'LLM error: {e}')
