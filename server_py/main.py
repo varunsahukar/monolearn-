@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import json
-from llm_client import get_llm_response
+from .llm_client import get_llm_response
 
 
 # Load environment variables
