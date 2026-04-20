@@ -105,6 +105,7 @@ const children = [
   }),
   launch('web', process.execPath, [viteBin, '--port', String(webPort)], {
     VITE_API_PROXY_TARGET: `http://127.0.0.1:${apiPort}`,
+    UV_LINK_MODE: 'copy',
   }),
 ];
 
