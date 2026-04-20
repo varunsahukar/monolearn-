@@ -72,7 +72,7 @@ async def llm_chat(request: Request):
         response = await get_llm_response(prompt)
         return {"response": response}
     except Exception as e:
-        return {"error": f"LLM chat failed: {str(e)}"}
+        return {"error": f"LLM chat failed: {e}"}
 
 
 @app.post("/api/code/analyze")
