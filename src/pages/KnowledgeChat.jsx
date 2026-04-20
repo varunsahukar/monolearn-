@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, 
   Mic, 
-  Paperclip, 
+  PlusCircle,
   X, 
   Bot, 
   User, 
@@ -136,11 +136,11 @@ const KnowledgeChat = () => {
       <div className="flex items-center gap-3 pb-4 border-b border-border/40 overflow-x-auto no-scrollbar">
         <button 
           onClick={() => setShowVaultSelector(!showVaultSelector)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-secondary hover:bg-border text-foreground rounded-lg text-xs font-bold transition-all shrink-0"
+          className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg text-xs font-bold transition-all shrink-0"
         >
-          <Paperclip className="w-3.5 h-3.5" />
+          <PlusCircle className="w-4 h-4" />
           <span>Add Context</span>
-          <ChevronDown className={cn("w-3 h-3 transition-transform", showVaultSelector ? "rotate-180" : "")} />
+          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showVaultSelector ? "rotate-180" : "")} />
         </button>
 
         {selectedContext.map(item => (
