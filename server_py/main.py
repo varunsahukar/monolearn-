@@ -12,8 +12,7 @@ load_dotenv(dotenv_path=dotenv_path)
 
 
 # Diagnostic check for Hugging Face API key
-hf_api_key = os.environ.get("HUGGINGFACE_API_KEY")
-if hf_api_key:
+if hf_api_key := os.environ.get("HUGGINGFACE_API_KEY"):
     print("✅ Hugging Face API key is configured.")
 else:
     print("❌ Hugging Face API key is NOT configured. Please set HUGGINGFACE_API_KEY in your Render environment.")
