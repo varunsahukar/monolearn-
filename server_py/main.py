@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import json
 from .llm_client import get_llm_response
 
-
 # Load environment variables
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(dotenv_path=dotenv_path)
@@ -69,10 +68,19 @@ async def llm_chat(request: Request):
         prompt = body.get("prompt")
         if not prompt:
             return {"error": "Missing prompt parameter"}
-        response = await get_llm_response(prompt)
+        response = get_llm_response(prompt)
         return {"response": response}
     except Exception as e:
         return {"error": f"LLM chat failed: {e}"}
+
+
+@app.get("/api/test-llm")
+def test_llm():
+    try:
+        response = get_llm_response("Hello, world!")
+        return {"response": response}
+    except Exception as e:
+        return {"error": f"LLM test failed: {str(e)}"}
 
 
 @app.post("/api/code/analyze")

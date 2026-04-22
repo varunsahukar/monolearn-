@@ -4,6 +4,12 @@ import net from 'node:net';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+const envConfig = dotenv.parse(fs.readFileSync(path.resolve(process.cwd(), '.env')));
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,21 +108,22 @@ if (webPort !== requestedWebPort) {
 
 const children = [
   launch(
-    'api',
-    pythonVenvPath,
-    [
-      '-m',
-      'uvicorn',
-      'server_py.main:app',
-      '--host',
-      '0.0.0.0',
-      '--port',
-      String(apiPort),
-    ],
-    {
-      PYTHONPATH: rootDir,
-    }
-  ),
+        'api',
+        pythonVenvPath,
+        [
+            '-m',
+            'uvicorn',
+            'server_py.main:app',
+            '--host',
+            '0.0.0.0',
+            '--port',
+            String(apiPort),
+        ],
+        {
+            PYTHONPATH: rootDir,
+            HUGGINGFACE_API_KEY: envConfig.HUGGINGFACE_API_KEY,
+        }
+    ),
   launch('web', process.execPath, [viteBin, '--port', String(webPort)], {
     VITE_API_PROXY_TARGET: `http://127.0.0.1:${apiPort}`,
     UV_LINK_MODE: 'copy',

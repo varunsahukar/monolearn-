@@ -1,39 +1,20 @@
 import os
-import httpx
+from transformers import pipeline
 
-# Configuration for the Hugging Face Inference API
-HF_API_URL = "https://api-inference.huggingface.co/models/gpt2"
-HF_API_KEY = os.environ.get('HUGGINGFACE_API_KEY')
-
-async def get_llm_response(prompt: str):
+def get_llm_response(prompt: str):
     """
-    Sends a prompt to the Hugging Face Inference API and gets a response.
+    Generates a response to a prompt using a local transformer model.
     """
-    if not HF_API_KEY:
-        raise ValueError('HUGGINGFACE_API_KEY not configured')
-
-    headers = {
-        "Authorization": f"Bearer {HF_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {"inputs": prompt}
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(HF_API_URL, headers=headers, json=payload, timeout=30.0)
-            response.raise_for_status()  # Raise an exception for bad status codes
-            result = response.json()
-            # Extract the generated text from the response
-            if result and isinstance(result, list) and "generated_text" in result[0]:
-                return result[0]["generated_text"]
-            else:
-                raise ValueError("Unexpected response format from LLM API")
-        except httpx.HTTPStatusError as e:
-            print(f"LLM API request failed with status {e.response.status_code}: {e.response.text}")
-            raise
-        except Exception as e:
-            print(f'LLM error: {e}')
-            raise
+    try:
+        generator = pipeline('text-generation', model='gpt2')
+        result = generator(prompt, max_length=100, num_return_sequences=1)
+        if result and isinstance(result, list) and "generated_text" in result[0]:
+            return result[0]["generated_text"]
+        else:
+            raise ValueError(f"Unexpected response format from LLM: {result}")
+    except Exception as e:
+        print(f'LLM error: {e}')
+        raise
 
 async def generate_chat_response(prompt: str):
     """
@@ -63,7 +44,7 @@ async def summarize_video(transcript: list):
     """
     Summarizes the content of a video based on its transcript.
     """
-    transcript_text = " ".join([block.get("text", "") for block in transcript])
+    transcript_text = " 0".join([block.get("text", "") for block in transcript])
     prompt = f"""Summarize the key points of the following video transcript:
 
 {transcript_text}"""
