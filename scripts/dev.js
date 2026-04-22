@@ -9,8 +9,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const viteBin = path.join(rootDir, 'node_modules', 'vite', 'bin', 'vite.js');
+const pythonVenvPath = path.join(rootDir, '.venv', 'bin', 'python');
 
-const DEFAULT_API_PORT = 8787;
+const DEFAULT_API_PORT = 8000;
 const DEFAULT_WEB_PORT = 5173;
 const MAX_PORT = 65535;
 
@@ -100,9 +101,22 @@ if (webPort !== requestedWebPort) {
 }
 
 const children = [
-  launch('api', process.execPath, ['--watch', 'server/index.js'], {
-    PORT: String(apiPort),
-  }),
+  launch(
+    'api',
+    pythonVenvPath,
+    [
+      '-m',
+      'uvicorn',
+      'server_py.main:app',
+      '--host',
+      '0.0.0.0',
+      '--port',
+      String(apiPort),
+    ],
+    {
+      PYTHONPATH: rootDir,
+    }
+  ),
   launch('web', process.execPath, [viteBin, '--port', String(webPort)], {
     VITE_API_PROXY_TARGET: `http://127.0.0.1:${apiPort}`,
     UV_LINK_MODE: 'copy',
