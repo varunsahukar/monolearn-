@@ -16,15 +16,15 @@ def get_llm_response(prompt: str):
         print(f'LLM error: {e}')
         raise
 
-async def generate_chat_response(prompt: str):
+def generate_chat_response(prompt: str):
     """
     Generates a direct response to a user's prompt.
     """
     # For a simple chat, we can directly use the user's prompt.
     # For more complex scenarios, you might add a system prompt here.
-    return await get_llm_response(prompt)
+    return get_llm_response(prompt)
 
-async def analyze_code(code: str, language: str = 'python', analysis_type: str = 'bugs'):
+def analyze_code(code: str, language: str = 'python', analysis_type: str = 'bugs'):
     """
     Analyzes a code snippet for bugs, improvements, or explanations.
     """
@@ -38,14 +38,14 @@ async def analyze_code(code: str, language: str = 'python', analysis_type: str =
 ```{language}
 {code}
 ```"""
-    return await get_llm_response(prompt)
+    return get_llm_response(prompt)
 
-async def summarize_video(transcript: list):
+def summarize_video(transcript: list):
     """
     Summarizes the content of a video based on its transcript.
     """
-    transcript_text = " 0".join([block.get("text", "") for block in transcript])
+    transcript_text = " ".join([block.get("text", "") for block in transcript])
     prompt = f"""Summarize the key points of the following video transcript:
 
 {transcript_text}"""
-    return await get_llm_response(prompt)
+    return get_llm_response(prompt)

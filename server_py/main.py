@@ -39,9 +39,9 @@ async def health_check():
 
 # Knowledge chat endpoint
 @app.post("/api/chat/knowledge")
-async def knowledge_chat(request: Request):
+def knowledge_chat(request: Request):
             try:
-                body = await request.json()
+                body = request.json()
                 query = body.get("query")
                 context = body.get("context", [])
 
@@ -50,7 +50,7 @@ async def knowledge_chat(request: Request):
 
                 context_str = "\n".join([f"- {c.get('name')}: {c.get('content', '')}" for c in context])
                 prompt = f"Answer the following question based on the provided context:\n\nContext:\n{context_str}\n\nQuestion: {query}"
-                answer = await get_llm_response(prompt)
+                answer = get_llm_response(prompt)
 
                 return {
                     "answer": answer,
@@ -62,9 +62,9 @@ async def knowledge_chat(request: Request):
 
 
 @app.post("/api/llm/chat")
-async def llm_chat(request: Request):
+def llm_chat(request: Request):
     try:
-        body = await request.json()
+        body = request.json()
         prompt = body.get("prompt")
         if not prompt:
             return {"error": "Missing prompt parameter"}
@@ -84,28 +84,28 @@ def test_llm():
 
 
 @app.post("/api/code/analyze")
-async def code_analysis(request: Request):
+def code_analysis(request: Request):
     try:
-        body = await request.json()
+        body = request.json()
         code = body.get("code")
         if not code:
             return {"error": "Missing code parameter"}
         prompt = f"Analyze the following code:\n\n{code}"
-        response = await get_llm_response(prompt)
+        response = get_llm_response(prompt)
         return {"response": response}
     except Exception as e:
         return {"error": f"Code analysis failed: {str(e)}"}
 
 
 @app.post("/api/video/summarize")
-async def video_summarization(request: Request):
+def video_summarization(request: Request):
     try:
-        body = await request.json()
+        body = request.json()
         transcript = body.get("transcript")
         if not transcript:
             return {"error": "Missing transcript parameter"}
         prompt = f"Summarize the following video transcript:\n\n{transcript}"
-        response = await get_llm_response(prompt)
+        response = get_llm_response(prompt)
         return {"response": response}
     except Exception as e:
         return {"error": f"Video summarization failed: {str(e)}"}
