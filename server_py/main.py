@@ -39,9 +39,9 @@ async def health_check():
 
 # Knowledge chat endpoint
 @app.post("/api/chat/knowledge")
-def knowledge_chat(request: Request):
+async def knowledge_chat(request: Request):
             try:
-                body = request.json()
+                body = await request.json()
                 query = body.get("query")
                 context = body.get("context", [])
 
@@ -62,9 +62,9 @@ def knowledge_chat(request: Request):
 
 
 @app.post("/api/llm/chat")
-def llm_chat(request: Request):
+async def llm_chat(request: Request):
     try:
-        body = request.json()
+        body = await request.json()
         prompt = body.get("prompt")
         if not prompt:
             return {"error": "Missing prompt parameter"}
@@ -84,9 +84,9 @@ def test_llm():
 
 
 @app.post("/api/code/analyze")
-def code_analysis(request: Request):
+async def code_analysis(request: Request):
     try:
-        body = request.json()
+        body = await request.json()
         code = body.get("code")
         if not code:
             return {"error": "Missing code parameter"}
@@ -98,9 +98,9 @@ def code_analysis(request: Request):
 
 
 @app.post("/api/video/summarize")
-def video_summarization(request: Request):
+async def video_summarization(request: Request):
     try:
-        body = request.json()
+        body = await request.json()
         transcript = body.get("transcript")
         if not transcript:
             return {"error": "Missing transcript parameter"}
