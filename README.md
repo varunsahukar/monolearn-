@@ -13,7 +13,7 @@ An AI-powered personal learning OS for 2026. SOLO TUTOR is a local-first interac
 
 ## Tech Stack
 
-- **Frontend**: React 19, Vite, Tailwind CSS v4
+- **Frontend**: React 19, Vite, Tailwind CSS v4.
 - **Backend**: Python, FastAPI
 - **LLM API**: Hugging Face
 - **Icons**: Lucide React
