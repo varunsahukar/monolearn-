@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import json
+from datetime import datetime
 from .llm_client import get_llm_response
 
 # Load environment variables
@@ -10,11 +11,12 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 
-# Diagnostic check for Hugging Face API key
-if hf_api_key := os.environ.get("HUGGINGFACE_API_KEY"):
-    print("✅ Hugging Face API key is configured.")
+# Diagnostic check for Grok API key
+if grok_api_key := os.environ.get("GROK_API_KEY"):
+    print("✅ Grok API key is configured.")
 else:
-    print("❌ Hugging Face API key is NOT configured. Please set HUGGINGFACE_API_KEY in your Render environment.")
+    print("❌ Grok API key is NOT configured. Please set GROK_API_KEY in your environment.")
+    print("ℹ️  The system will fall back to local GPT-2 model if Grok API is unavailable.")
 
 
 app = FastAPI()
@@ -55,7 +57,7 @@ async def knowledge_chat(request: Request):
                 return {
                     "answer": answer,
                     "context": [{"name": c.get("name"), "type": c.get("type")} for c in context],
-                    "timestamp": "2026-04-20T00:00:00Z"
+                    "timestamp": datetime.now().isoformat()
                 }
             except Exception as e:
                 return {"error": f"Knowledge chat failed: {str(e)}"}

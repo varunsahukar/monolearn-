@@ -6,11 +6,4 @@ youtube-transcript-api
 google-cloud-speech
 yt-dlp
 httpx
-huggingface_hub
-fastapi
-uvicorn[standard]
-python-dotenv
-google-generativeai
-youtube-transcript-api
-google-cloud-speech
-yt-dlp
+transformers

@@ -17,7 +17,7 @@ import {
 import { useVault } from '../hooks/useVault';
 import { clearPendingIntent, getPendingIntent } from '../utils/studyIntent';
 import { cn } from '../utils/cn';
-import { generateKnowledgeChatResponse } from '../utils/llmClient.js';
+import { getKnowledgeChatResponse } from '../utils/apiClient.js';
 
 const KnowledgeChat = () => {
   const { items } = useVault();
@@ -69,6 +69,7 @@ const KnowledgeChat = () => {
   }, [initialIntent]);
 
   const handleSend = async () => {
+    console.log("Send button clicked!");
     if (!input.trim() || isThinking) return;
 
     const userMessage = {
@@ -83,26 +84,42 @@ const KnowledgeChat = () => {
     setIsThinking(true);
 
     try {
-        const response = await generateKnowledgeChatResponse(userMessage.content, selectedContext);
+        const response = await getKnowledgeChatResponse(userMessage.content, selectedContext);
+        console.log('LLM Response:', response);
 
-        if (!response) {
-          throw new Error('Failed to get response from LLM');
+        let assistantResponse = '';
+        
+        // Handle different response formats
+        if (typeof response === 'string') {
+          assistantResponse = response;
+        } else if (response && response.answer) {
+          assistantResponse = response.answer;
+        } else if (response && response.response) {
+          assistantResponse = response.response;
+        } else if (response) {
+          // If response is an object but doesn't have expected properties
+          assistantResponse = JSON.stringify(response);
+        } else {
+          throw new Error('Empty response from LLM');
+        }
+
+        if (!assistantResponse.trim()) {
+          throw new Error('Empty response from LLM');
         }
 
         const assistantMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: response.answer,
-          context: response.context,
-          timestamp: new Date(response.timestamp),
+          content: assistantResponse,
         };
 
         setMessages(prev => [...prev, assistantMessage]);
       } catch (error) {
+      console.error('Chat error:', error);
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `I encountered an error: ${error.message}. Please check your connection and try again.`,
+        content: `I encountered an error: ${error.message}. Please try again.`,
         timestamp: new Date()
       }]);
     } finally {

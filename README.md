@@ -37,10 +37,13 @@ cd monolearn-
 ### 2. Set Up Environment Variables
 
 - Create a `.env` file in the root of the project.
-- Add your Hugging Face API key to the `.env` file:
+- Add your Grok API key to the `.env` file:
+
   ```
-  HUGGINGFACE_API_KEY='your_hugging_face_api_key'
+  GROK_API_KEY='your_grok_api_key'
   ```
+
+  Note: The system will automatically fall back to a local GPT-2 model if the Grok API is unavailable.
 
 ### 3. Backend Setup (Python/FastAPI)
 

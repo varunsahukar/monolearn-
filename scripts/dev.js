@@ -121,7 +121,7 @@ const children = [
         ],
         {
             PYTHONPATH: rootDir,
-            HUGGINGFACE_API_KEY: envConfig.HUGGINGFACE_API_KEY,
+            GROK_API_KEY: envConfig.GROK_API_KEY,
         }
     ),
   launch('web', process.execPath, [viteBin, '--port', String(webPort)], {

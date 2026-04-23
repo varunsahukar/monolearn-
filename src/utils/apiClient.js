@@ -52,6 +52,13 @@ export const getChatResponse = async (prompt) => {
   return response.response || '';
 };
 
+export const getKnowledgeChatResponse = async (query, context) => {
+  return makeRequest('/api/chat/knowledge', {
+    method: 'POST',
+    body: JSON.stringify({ query, context }),
+  });
+};
+
 /**
  * Analyze code.
  * @param {string} code - The code to analyze.

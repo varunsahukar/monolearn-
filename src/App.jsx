@@ -18,7 +18,8 @@ import { cn } from './utils/cn';
 function App() {
   const { theme, toggleTheme } = useTheme();
   const [isStarted, setIsStarted] = useState(() => {
-    return localStorage.getItem('solo-tutor-started') === 'true';
+    return true; // Temporarily bypass landing page for testing
+    // return localStorage.getItem('solo-tutor-started') === 'true';
   });
   const [activePage, setActivePage] = useState('chat');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
