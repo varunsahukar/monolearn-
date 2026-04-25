@@ -1,29 +1,114 @@
+Here is a **clean, professional, copy-paste ready README.md** with no emojis and improved clarity, tone, and structure:
+
+---
+
 # SOLO TUTOR (LearnVault)
 
-An AI-powered personal learning OS for 2026. SOLO TUTOR is a local-first interactive prototype focused on deep work, premium knowledge tooling, and live video transcript intelligence.
+**An AI-Powered Personal Learning Operating System**
 
-## Features
+SOLO TUTOR is a local-first, intelligent learning platform designed to transform how individuals interact with knowledge. It enables structured learning, deep work, and intelligent retrieval by converting scattered resources into a unified, adaptive system.
 
-- **Neural Vault**: Secure, local storage for all your study materials (PDFs, Videos, Code).
-- **Knowledge Chat**: Context-aware AI tutor with RAG-style citations.
-- **Video Intelligence**: AI-generated timestamped summaries and insights from educational videos.
-- **Code Mentor**: Real-time code analysis, debugging, and neural fixes.
-- **Adaptive Quiz Lab**: Personalized testing based on your vault content to master any subject.
-- **Global Neural Tutor**: A persistent AI assistant that cross-references your entire knowledge base.
+---
 
-## Tech Stack
+## Overview
 
-- **Frontend**: React 19, Vite, Tailwind CSS v4
-- **Backend**: Python, FastAPI
-- **LLM API**: Hugging Face
-- **Icons**: Lucide React
-- **Animations**: Tailwind CSS Animate
-- **Persistence**: Local browser storage (localStorage/IndexedDB)
-- **Theme**: "Black Claude" (High-contrast, focused aesthetic)
+Traditional learning tools focus on content consumption. SOLO TUTOR introduces a system where knowledge is:
 
-## Privacy & Security
+* Structured and interconnected
+* Searchable and context-aware
+* Continuously evolving with user interaction
 
-Solo Tutor operates on a local-first philosophy. Vault data stays in local browser storage, while features like YouTube transcript analysis make live external requests only when you trigger them.
+It functions as a personal intelligence layer that enhances understanding, retention, and application.
+
+---
+
+## Core Features
+
+### Neural Vault
+
+A local-first storage system for managing:
+
+* PDFs
+* Videos
+* Notes
+* Code snippets
+
+All data is stored securely within the browser, ensuring privacy and fast access.
+
+---
+
+### Knowledge Chat
+
+A context-aware AI assistant that:
+
+* Retrieves information from user-provided content
+* Generates responses with contextual grounding
+* Supports retrieval-augmented generation (RAG)
+
+---
+
+### Video Intelligence
+
+Processes educational video content to generate:
+
+* Timestamped summaries
+* Key insights
+* Concept-level breakdowns
+
+---
+
+### Code Mentor
+
+Provides:
+
+* Real-time code analysis
+* Debugging assistance
+* AI-driven improvement suggestions
+
+---
+
+### Adaptive Quiz Lab
+
+* Generates quizzes from stored content
+* Adjusts difficulty dynamically
+* Reinforces weak areas through repetition
+
+---
+
+### Global Neural Tutor
+
+A persistent AI layer that:
+
+* Connects all stored knowledge
+* Identifies relationships across topics
+* Acts as a unified learning assistant
+
+---
+
+## Technology Stack
+
+| Layer         | Technology                      |
+| ------------- | ------------------------------- |
+| Frontend      | React 19, Vite, Tailwind CSS v4 |
+| Backend       | Python, FastAPI                 |
+| AI/LLM        | Hugging Face, Grok API          |
+| Storage       | IndexedDB, LocalStorage         |
+| UI Components | Lucide React                    |
+| Styling       | Tailwind CSS Animate            |
+| Theme         | Black Claude                    |
+
+---
+
+## Privacy and Architecture
+
+SOLO TUTOR follows a local-first design philosophy:
+
+* User data is stored in the browser
+* No mandatory cloud storage
+* External API calls are triggered only when required
+* Full control remains with the user
+
+---
 
 ## Getting Started
 
@@ -34,50 +119,98 @@ git clone https://github.com/varunsahukar/monolearn-.git
 cd monolearn-
 ```
 
-### 2. Set Up Environment Variables
+---
 
-- Create a `.env` file in the root of the project.
-- Add your Grok API key to the `.env` file:
+### 2. Configure Environment Variables
 
-  ```
-  GROK_API_KEY='your_grok_api_key'
-  ```
+Create a `.env` file in the root directory:
 
-  Note: The system will automatically fall back to a local GPT-2 model if the Grok API is unavailable.
+```env
+GROK_API_KEY=your_grok_api_key
+```
 
-### 3. Backend Setup (Python/FastAPI)
-
-- Navigate to the Python server directory:
-  ```bash
-  cd server_py
-  ```
-- Install the required Python packages:
-  ```bash
-  pip install -r requirements.txt
-  ```
-- Start the FastAPI server:
-  ```bash
-  uvicorn main:app --reload --port 8787
-  ```
-  The backend will be running at `http://localhost:8787`.
-
-### 4. Frontend Setup (React/Vite)
-
-- In a new terminal, from the project root, install the npm dependencies:
-  ```bash
-  npm install
-  ```
-- Start the Vite development server:
-  ```bash
-  npm run dev
-  ```
-  The frontend will be running at `http://localhost:5173` (or another port if 5173 is busy).
-
-### 5. Launch the App
-
-- Open your browser and navigate to the frontend URL (e.g., `http://localhost:5173`).
-- Launch the Neural Vault and start building your knowledge base.
+If the API key is unavailable, the system falls back to a local GPT-2 model.
 
 ---
 
-Built with for the next generation of learners.
+### 3. Backend Setup (FastAPI)
+
+```bash
+cd server_py
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8787
+```
+
+Backend URL:
+
+```
+http://localhost:8787
+```
+
+---
+
+### 4. Frontend Setup (React + Vite)
+
+```bash
+npm install
+npm run dev
+```
+
+Frontend URL:
+
+```
+http://localhost:5173
+```
+
+---
+
+### 5. Run the Application
+
+Open the frontend URL in your browser and start using the Neural Vault.
+
+---
+
+## System Architecture
+
+```
+Frontend (React)
+   ↓
+FastAPI Backend
+   ↓
+LLM Layer (Grok / Hugging Face)
+   ↓
+Local Storage (IndexedDB)
+```
+
+---
+
+## Future Enhancements
+
+* Encrypted multi-device synchronization
+* Offline LLM inference
+* Knowledge graph visualization
+* Voice-based interaction
+* Collaborative knowledge spaces
+
+---
+
+## Contribution
+
+Contributions are encouraged. You can contribute by:
+
+* Improving learning workflows
+* Enhancing AI capabilities
+* Optimizing UI/UX
+
+Fork the repository and submit a pull request.
+
+---
+
+## Author
+
+Varun Sahukar
+Information Science Engineering Student
+Focused on building intelligent learning systems
+
+---
+
